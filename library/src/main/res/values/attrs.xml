@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+
+    <!-- Bright complement to the primary branding color. By default, this is the color applied
+         to framework controls (via colorControlActivated). -->
+    <attr format="color" name="colorAccent" />
+    
+    <!-- The color applied to framework controls in their activated (ex. checked) state. -->
+    <attr format="color" name="colorControlNormal" />
+    
+    <declare-styleable name="MaterialSeekBar">
+    
+        <attr format="enum" name="msb_barStyle">
+            <enum name="continuous" value="0" />
+            <enum name="discrete" value="1" />
+        </attr>
+        
+        <attr format="float" name="msb_max" />
+        <attr format="float" name="msb_min" />
+        <attr format="float" name="msb_stepSize" />
+        <attr format="boolean" name="msb_tick" />
+        <attr format="color" name="msb_tickColor" />
+        <attr format="integer" name="msb_tickStep" />
+        <attr format="float" name="msb_value" />
+    
+    </declare-styleable>
+
+</resources>
