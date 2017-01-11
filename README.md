@@ -1,6 +1,6 @@
 # android-material-seekbar
 
-Add a Material ProgressBar on pre-lollipop devices. Supports Android 2.3 API 9 (GINGERBREAD) and up.
+Add a MaterialSeekBar on pre-lollipop devices. Supports Android 2.3 API 9 (GINGERBREAD) and up.
 
 Usage:
 
