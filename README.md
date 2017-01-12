@@ -18,7 +18,7 @@ Usage:
     Step 2. Add the dependency
     
     dependencies {
-	        compile 'com.github.robertapengelly:android-material-seekbar:1.0.0'
+	        compile 'com.github.robertapengelly:android-material-seekbar:1.0.1'
 	}
 
 Implementation:
@@ -37,7 +37,7 @@ Implementation:
             <robertapengelly.support.widget.MaterialSeekBar
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
-                app:msb_value="50" />
+                app:msb_progress="50" />
         
         </LinearLayout>
 
