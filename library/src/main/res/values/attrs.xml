@@ -17,11 +17,11 @@
         
         <attr format="float" name="msb_max" />
         <attr format="float" name="msb_min" />
+        <attr format="float" name="msb_progress" />
         <attr format="float" name="msb_stepSize" />
         <attr format="boolean" name="msb_tick" />
         <attr format="color" name="msb_tickColor" />
         <attr format="integer" name="msb_tickStep" />
-        <attr format="float" name="msb_value" />
     
     </declare-styleable>
 

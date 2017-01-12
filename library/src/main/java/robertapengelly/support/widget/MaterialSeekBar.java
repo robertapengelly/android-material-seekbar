@@ -15,7 +15,6 @@ import  android.view.animation.DecelerateInterpolator;
 
 import  robertapengelly.support.animation.ValueAnimator;
 import  robertapengelly.support.materialseekbar.R;
-import  robertapengelly.support.materialseekbar.util.ThemeUtils;
 
 public class MaterialSeekBar extends View {
 
@@ -31,7 +30,7 @@ public class MaterialSeekBar extends View {
     boolean tick;
     int tickColor, tickStep;
     
-    OnValueChangedListener onValueChangedListener;
+    OnSeekBarChangeListener onSeekBarChangeListener;
     Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     
     public MaterialSeekBar(Context context) {
@@ -102,12 +101,33 @@ public class MaterialSeekBar extends View {
     
     }
     
+    private int getColorFromAttrRes(int attr, Context context) {
+    
+        TypedArray a = context.obtainStyledAttributes(new int[] {attr});
+        
+        try {
+            return a.getColor(0, 0);
+        } finally {
+            a.recycle();
+        }
+    
+    }
+    
     public float getMax() {
         return max;
     }
     
     public float getMin() {
         return min;
+    }
+    
+    public float getProgress() {
+    
+        if (style == Style.Discrete)
+            return stepValue(value);
+        
+        return value;
+    
     }
     
     public float getStepSize() {
@@ -136,30 +156,21 @@ public class MaterialSeekBar extends View {
         return tickStep;
     }
     
-    public float getValue() {
-    
-        if (style == Style.Discrete)
-            return stepValue(value);
-        
-        return value;
-    
-    }
-    
     public boolean hashTick() {
         return tick;
     }
     
     private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
     
-        colorAccent = ThemeUtils.getColorFromAttrRes(R.attr.colorAccent, context);
+        colorAccent = getColorFromAttrRes(R.attr.colorAccent, context);
         
         if ((colorAccent == 0) && Build.VERSION.SDK_INT >= 21)
-            colorAccent = ThemeUtils.getColorFromAttrRes(android.R.attr.colorAccent, context);
+            colorAccent = getColorFromAttrRes(android.R.attr.colorAccent, context);
         
-        colorControlNormal = ThemeUtils.getColorFromAttrRes(R.attr.colorControlNormal, context);
+        colorControlNormal = getColorFromAttrRes(R.attr.colorControlNormal, context);
         
         if ((colorControlNormal == 0) && Build.VERSION.SDK_INT >= 21)
-            colorControlNormal = ThemeUtils.getColorFromAttrRes(android.R.attr.colorControlNormal, context);
+            colorControlNormal = getColorFromAttrRes(android.R.attr.colorControlNormal, context);
         
         STROKE_WIDTH = (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
             getResources().getDisplayMetrics()) * 2);
@@ -175,12 +186,12 @@ public class MaterialSeekBar extends View {
         setMax(a.getFloat(R.styleable.MaterialSeekBar_msb_max, 100));
         setMin(a.getFloat(R.styleable.MaterialSeekBar_msb_min, 0));
         setPadding((int) THUMB_RADIUS_DRAGGED, 0, (int) THUMB_RADIUS_DRAGGED, 0);
+        setProgress(a.getFloat(R.styleable.MaterialSeekBar_msb_progress, 0));
         setStepSize(a.getFloat(R.styleable.MaterialSeekBar_msb_stepSize, 1));
         setStyle(Style.values()[a.getInt(R.styleable.MaterialSeekBar_msb_barStyle, 0)]);
         setTick(a.getBoolean(R.styleable.MaterialSeekBar_msb_tick, true));
         setTickColor(a.getColor(R.styleable.MaterialSeekBar_msb_tickColor, colorControlNormal));
         setTickStep(a.getInt(R.styleable.MaterialSeekBar_msb_tickStep, 1));
-        setValue(a.getFloat(R.styleable.MaterialSeekBar_msb_value, 0));
         
         a.recycle();
     
@@ -250,6 +261,9 @@ public class MaterialSeekBar extends View {
                 if (parent != null)
                     parent.requestDisallowInterceptTouchEvent(false);
                 
+                if (onSeekBarChangeListener != null)
+                    onSeekBarChangeListener.onStopTrackingTouch(this);
+                
                 break;
             case MotionEvent.ACTION_DOWN:
                 if (radiusAnimator != null)
@@ -274,6 +288,9 @@ public class MaterialSeekBar extends View {
                 if (parent != null)
                     parent.requestDisallowInterceptTouchEvent(true);
                 
+                if (onSeekBarChangeListener != null)
+                    onSeekBarChangeListener.onStartTrackingTouch(this);
+                
                 break;
             default:
                 break;
@@ -287,17 +304,17 @@ public class MaterialSeekBar extends View {
         
         postInvalidate();
         
-        if ((newValue != value) && (onValueChangedListener != null)) {
+        if ((newValue != value) && (onSeekBarChangeListener != null)) {
         
             if (style == Style.Discrete) {
             
                 int sv = stepValue(newValue);
                 
                 if (stepValue(value) != sv)
-                    onValueChangedListener.onValueChanged(this, sv);
+                    onSeekBarChangeListener.onProgressChanged(this, sv, true);
             
             } else
-                onValueChangedListener.onValueChanged(this, newValue);
+                onSeekBarChangeListener.onProgressChanged(this, newValue, true);
         
         }
         
@@ -330,8 +347,22 @@ public class MaterialSeekBar extends View {
     
     }
     
-    public void setOnValueChangedListener(OnValueChangedListener onValueChangedListener) {
-        this.onValueChangedListener = onValueChangedListener;
+    public void setOnSeekBarChangeListener(OnSeekBarChangeListener onSeekBarChangeListener) {
+        this.onSeekBarChangeListener = onSeekBarChangeListener;
+    }
+    
+    public void setProgress(float progress) {
+    
+        if (style == Style.Discrete)
+            this.value = stepValue(Math.max(min, Math.min(progress, max)));
+        else
+            this.value = Math.max(min, Math.min(progress, max));
+        
+        postInvalidate();
+        
+        if (onSeekBarChangeListener != null)
+            onSeekBarChangeListener.onProgressChanged(this, this.value, false);
+    
     }
     
     public void setStepSize(float step) {
@@ -359,15 +390,6 @@ public class MaterialSeekBar extends View {
         this.tickStep = tickStep;
     }
     
-    public void setValue(float value) {
-    
-        if (style == Style.Discrete)
-            this.value = stepValue(Math.max(min, Math.min(value, max)));
-        else
-            this.value = Math.max(min, Math.min(value, max));
-    
-    }
-    
     private int stepValue(float v) {
         return (int) (Math.floor((v - min + step / 2) / step) * step + min);
     }
@@ -376,8 +398,12 @@ public class MaterialSeekBar extends View {
         Continuous, Discrete
     }
     
-    public interface OnValueChangedListener {
-        void onValueChanged(MaterialSeekBar seekbar, float value);
+    public interface OnSeekBarChangeListener {
+    
+        void onProgressChanged(MaterialSeekBar seekbar, float progress, boolean fromUser);
+        void onStartTrackingTouch(MaterialSeekBar seekbar);
+        void onStopTrackingTouch(MaterialSeekBar seekbar);
+    
     }
 
 }
